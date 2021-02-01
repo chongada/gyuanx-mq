@@ -1,16 +1,3 @@
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-find_program(CCACHE_PROGRAM ccache)
-if(CCACHE_PROGRAM)
-  foreach(lang C CXX)
-    if(NOT DEFINED CMAKE_${lang}_COMPILER_LAUNCHER AND NOT CMAKE_${lang}_COMPILER MATCHES ".*/ccache")
-      message(STATUS "Enabling ccache for ${lang}")
-      set(CMAKE_${lang}_COMPILER_LAUNCHER ${CCACHE_PROGRAM} CACHE STRING "")
-    endif()
-  endforeach()
-endif()
-
 cmake_minimum_required(VERSION 3.7)
 
 # Has to be set before `project()`, and ignored on non-macos:
@@ -22,7 +9,7 @@ include(GNUInstallDirs)
 
 set(GYUANXMQ_VERSION_MAJOR 1)
 set(GYUANXMQ_VERSION_MINOR 2)
-set(GYUANXMQ_VERSION_PATCH 3)
+set(GYUANXMQ_VERSION_PATCH 2)
 set(GYUANXMQ_VERSION "${GYUANXMQ_VERSION_MAJOR}.${GYUANXMQ_VERSION_MINOR}.${GYUANXMQ_VERSION_PATCH}")
 message(STATUS "gyuanxmq v${GYUANXMQ_VERSION}")
 
@@ -44,16 +31,11 @@ endif()
 option(GYUANXMQ_BUILD_TESTS "Building and perform gyuanxmq tests" ${gyuanxmq_IS_TOPLEVEL_PROJECT})
 option(GYUANXMQ_INSTALL "Add gyuanxmq libraries and headers to cmake install target; defaults to ON if BUILD_SHARED_LIBS is enabled or we are the top-level project; OFF for a static subdirectory build" ${gyuanxmq_INSTALL_DEFAULT})
 option(GYUANXMQ_INSTALL_CPPZMQ "Install cppzmq header with gyuanxmq/ headers (requires GYUANXMQ_INSTALL)" ON)
-option(GYUANXMQ_GYUANXMQ_COMPAT "Install gyuanxmq compatibility headers and pkg-config for rename migration" ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 configure_file(gyuanxmq/version.h.in gyuanxmq/version.h @ONLY)
 configure_file(libgyuanxmq.pc.in libgyuanxmq.pc @ONLY)
-if(GYUANXMQ_GYUANXMQ_COMPAT)
-    configure_file(libgyuanxmq.pc.in libgyuanxmq.pc @ONLY)
-endif()
-
 
 add_library(gyuanxmq
     gyuanxmq/address.cpp
@@ -159,9 +141,6 @@ else()
 endif()
 
 add_library(gyuanxmq::gyuanxmq ALIAS gyuanxmq)
-if(GYUANXMQ_GYUANXMQ_COMPAT)
-    add_library(gyuanxmq::gyuanxmq ALIAS gyuanxmq)
-endif()
 
 export(
     TARGETS gyuanxmq
@@ -188,6 +167,7 @@ if(GYUANXMQ_INSTALL)
         gyuanxmq/hex.h
         gyuanxmq/gyuanxmq.h
         gyuanxmq/message.h
+        gyuanxmq/string_view.h
         gyuanxmq/variant.h
         ${CMAKE_CURRENT_BINARY_DIR}/gyuanxmq/version.h
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gyuanxmq
@@ -205,32 +185,6 @@ if(GYUANXMQ_INSTALL)
         FILES ${CMAKE_CURRENT_BINARY_DIR}/libgyuanxmq.pc
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     )
-
-    if(GYUANXMQ_GYUANXMQ_COMPAT)
-        install(
-            FILES gyuanxmq/address.h
-            gyuanxmq/auth.h
-            gyuanxmq/base32z.h
-            gyuanxmq/base64.h
-            gyuanxmq/batch.h
-            gyuanxmq/bt_serialize.h
-            gyuanxmq/bt_value.h
-            gyuanxmq/connections.h
-            gyuanxmq/hex.h
-            gyuanxmq/gyuanxmq.h
-            gyuanxmq/message.h
-            gyuanxmq/variant.h
-            gyuanxmq/version.h
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gyuanxmq
-            )
-
-        install(
-            FILES ${CMAKE_CURRENT_BINARY_DIR}/libgyuanxmq.pc
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-            )
-    endif()
-
-
 endif()
 
 if(GYUANXMQ_BUILD_TESTS)
